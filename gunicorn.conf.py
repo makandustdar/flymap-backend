@@ -1,14 +1,14 @@
-"""Gunicorn config for ParsPack PaaS (WSGI).
+"""Gunicorn config (WSGI).
 
-Panel «app config» path: gunicorn.conf.py
-Default listen port must be 8000 — see:
-https://docs.parspack.com/paas/deploy/programming-languages/django/
+Listens on PORT (default 8000) inside the container.
+Docker Compose maps host 8786 → container 8000; host nginx proxies to :8786.
+Also used as ParsPack «app config» when deploying there.
 """
 
 import multiprocessing
 import os
 
-# ParsPack routes traffic to this port; do not change unless panel port matches.
+# Container-internal bind; external exposure is via compose ports (8786:8000).
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 
 # Keep workers modest for small PaaS plans; override with WEB_CONCURRENCY.

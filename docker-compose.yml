@@ -1,0 +1,55 @@
+# FlyMap backend — Django/Gunicorn on host port 8786 (no container nginx).
+# Host nginx should proxy_pass to http://127.0.0.1:8786
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flymap}
+      POSTGRES_USER: ${POSTGRES_USER:-flymap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flymap}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flymap} -d ${POSTGRES_DB:-flymap}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    # Not published to the host — only the web container reaches it.
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      # External access for host nginx / direct clients
+      - "${HOST_PORT:-8786}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "8000"
+      DEBUG: ${DEBUG:-False}
+      DATABASE_URL: ${DATABASE_URL:-postgres://flymap:flymap@db:5432/flymap}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-in-production}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      WINDY_POINT_FORECAST_KEY: ${WINDY_POINT_FORECAST_KEY:-}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  postgres_data:
