@@ -1,0 +1,11 @@
+# Ignore local / deploy artefacts
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+staticfiles/*
+!staticfiles/.gitkeep
+.env
+*.log
+.DS_Store
+.serena/
