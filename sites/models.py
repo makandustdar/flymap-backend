@@ -66,8 +66,8 @@ class FlyingSite(models.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "lat": round(self.lat, 2),
-            "lon": round(self.lon, 2),
+            "lat": self.lat,
+            "lon": self.lon,
             "elevation_m": self.elevation_m,
             "allowed_wind_sectors": self.allowed_wind_sectors,
             "wind_ideal_kmh": self.wind_ideal_kmh,

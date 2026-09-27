@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.test import SimpleTestCase, TestCase
 
+from sites.management.commands.seed_sites import SITES
 from sites.models import FlyingSite
 from sites.services.engine import aggregate_models, analyze_hour, build_forecast_response
 from sites.services.sectors import angular_diff, dir_label, in_sector
@@ -25,6 +26,19 @@ ABCHALAKI_CFG = {
     "models": ["icon", "iconEu", "gfs"],
     "require_model_agreement": True,
 }
+
+
+class SeedCatalogTests(SimpleTestCase):
+    def test_sites_are_unique_and_abchalaki_is_exact(self):
+        ids = [site["id"] for site in SITES]
+        self.assertEqual(len(ids), len(set(ids)))
+        by_id = {site["id"]: site for site in SITES}
+        self.assertAlmostEqual(by_id["abchalaki-langarud"]["lat"], 37.162668)
+        self.assertAlmostEqual(by_id["abchalaki-langarud"]["lon"], 50.138840)
+        self.assertAlmostEqual(by_id["estalkhjan-rudbar"]["lat"], 36.81025, places=5)
+        self.assertAlmostEqual(by_id["estalkhjan-rudbar"]["lon"], 49.8231389, places=5)
+        self.assertEqual(by_id["niavol"]["allowed_wind_sectors"][0]["from"], 157.5)
+        self.assertEqual(by_id["siben"]["allowed_wind_sectors"][0]["wrap"], True)
 
 
 class SectorTests(SimpleTestCase):
